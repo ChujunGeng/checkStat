@@ -20,7 +20,7 @@ other 2 scripts.
 : this awk script has been merged into the bash script as a heredoc)
 
 
-Usage: $<path-to-checkStat.sh>/checkStat.sh
+Usage: $checkStat.sh
 	then compare the results manually
 
 

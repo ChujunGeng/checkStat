@@ -61,7 +61,7 @@ echo "Collecting data from the output..."
 for i in 1 2 3 4 5 ; do
 	printf "Collecting data of packet p$i..."
 	#get the time data for each packet
-	grep "[P|p]$i" temp | sed "s/ms.*//" | sed "s/^0*//" > "temp.p$i"
+	grep "[Pp]$i" temp | sed "s/ms.*//" | sed "s/^0*//" > "temp.p$i"
 	line_cnt=`wc -l < "temp.p$i"`
 	#check if there're 7 lines in total
 	if [ $line_cnt -ne 7 ] ; then
@@ -81,7 +81,7 @@ for i in 1 2 3 4 5 ; do
 done
 
 #get emulation end time and compare with expected results
-if cat temp | grep 'ms.*[E|e]mulation.*[E|e]nd' > temp.end ; then
+if cat temp | grep 'ms.*[Ee]mulation.*[Ee]nd' > temp.end ; then
 	etime=`cat temp.end | sed 's/ms.*//' | sed 's/^0*//'`
 	echo "Analyzing statistics..."
 	print_boundary

@@ -43,7 +43,7 @@ class Grader:
             for line in f:
                 try:
                     self.packet[i].append(float(line))
-                except ValueError:
+                except:
                     sys.stderr.write('Grading Helper: [ERROR]Invalid data\n')
                     print 'Grading Helper: Problem detected. Manual inspection is suggested'
                     quit()
@@ -93,7 +93,7 @@ class Grader:
 if __name__ == '__main__':
     try:
         endTime = float(sys.argv[1])
-    except ValueError:
+    except:
         sys.stderr.write('Grading Helper: [ERROR]Invalid ending time\n')
         print 'Grading Helper: Problem detected. Manual inspection is suggested'
         quit()

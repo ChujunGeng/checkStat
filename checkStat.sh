@@ -4,19 +4,19 @@
 #	AWK Script	  #
 ###########################
 read -d '' getStat << 'EOF'
-/Statistics/,0{
+/[Ss][Tt][Aa][Tt][Ii][Ss][Tt][Ii][Cc][Ss]/,0{
 	print $0;
-	}
+}
 EOF
 ###########################
-#	End of AWK Script #
+#    End of AWK Script    #
 ###########################
 
 print_boundary()
 {
 	local i=0
 	while [ $i -lt 80 ] ; do
-		printf '>'
+		printf '='
 		i=`expr $i '+' 1`
 	done
 	printf '\n'	
@@ -24,7 +24,7 @@ print_boundary()
 
 notInOrder()
 {
-	#check if timestamps are in descending order
+	#check if timestamps are not in correct order
 	local line
 	read line
 	prev=$line
@@ -46,56 +46,57 @@ notInOrder()
 
 path=`echo "$0" | sed "s/checkStat\.sh//"`
 
+#check if warmup2's executable is in current working directory
 if [ ! -x './warmup2' ]; then
-	echo "Grading Helper:[ERROR]no executable named warmup2 found" 1>&2
+	echo "[ERROR] cannot find warmup2 executable file" 1>&2
 	exit 2
 fi
 
-echo "Running warmup2..."
+#run warmup2 with certain configs and save trace output to ./temp
+echo ">>>Running warmup2..."
 ./warmup2 -n 5 -r 2.5 > temp
 
+#remove empty lines in the ./temp file
 awk 'NF' temp > temp.compact
-echo "warmup2 has returned..."
-echo "Collecting data from the output..."
+echo ">>>warmup2 has returned..."
+echo ">>>Collecting data from the output..."
 
+#collect each packet's timestamp and check if the trace output is valid
 for i in 1 2 3 4 5 ; do
-	printf "Collecting data of packet p$i..."
-	#get the time data for each packet
+	printf ">>>Collecting data of packet p$i..."
+	#get the timestamps from each packet and remove leading 0s
 	grep "[Pp]$i" temp | sed "s/ms.*//" | sed "s/^0*//" > "temp.p$i"
 	line_cnt=`wc -l < "temp.p$i"`
 	#check if there're 7 lines in total
 	if [ $line_cnt -ne 7 ] ; then
 		echo
-		echo "Grading Helper:[ERROR]there're $line_cnt lines of output for packet p$i" 1>&2
-		echo "Grading Helper: Problem detected. Manual inspection is suggested"
+		echo "[ERROR] there're $line_cnt lines of output for packet p$i" 1>&2
 		exit 1
 	fi
-	#check if time data is in ascending order
+	#check if timestamps are in ascending order
 	if notInOrder < "temp.p$i" ; then
 		echo
-		echo "Grading Helper:[ERROR]output not in correct order" 1>&2
-		echo "Grading Helper: Problem detected. Manual inspection is suggested"
+		echo "[ERROR] timestamps not monotonically non-decreasing" 1>&2
 		exit 1
 	fi
 	echo "done"
 done
 
-#get emulation end time and compare with expected results
+#get emulation ending time and calculate expected results using Python
 if cat temp | grep 'ms.*[Ee]mulation.*[Ee]nd' > temp.end ; then
-	etime=`cat temp.end | sed 's/ms.*//' | sed 's/^0*//'`
-	echo "Analyzing statistics..."
+	endTime=`cat temp.end | sed 's/ms.*//' | sed 's/^0*//'`
+	echo ">>>Analyzing statistics..."
 	print_boundary
-	python "$path/grader.py" $etime
+	python "$path/grader.py" $endTime
 	print_boundary
 	awk "$getStat" temp.compact
 	print_boundary
-	echo "Please compare the above results with student's output..."
+	echo ">>>Please compare the expected results with student's output..."
 else
-	echo 'Grading Helper: [ERROR] cannot find emulation ending time' 1>&2
-	echo 'Grading Helper: Problem detected. Manual inspection is suggested'
+	echo '[ERROR] cannot find emulation ending time' 1>&2
 	exit 1
 fi
 
 #cleanup
-rm -f temp.* temp
+#rm -f temp.* temp
 

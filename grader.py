@@ -38,15 +38,17 @@ class Grader:
         for i in range(1, 6):
             if i not in self.packet:
                 self.packet[i] = []
-            filename = "temp.p" + str(i)
-            f = open(filename, 'r')
-            for line in f:
-                try:
-                    self.packet[i].append(float(line))
-                except:
-                    sys.stderr.write('Grading Helper: [ERROR]Invalid data\n')
-                    print 'Grading Helper: Problem detected. Manual inspection is suggested'
-                    quit()
+            filename = 'temp.p' + str(i)
+            with open(filename, 'r') as f:
+                line_cnt = 0
+                for line in f:
+                    line_cnt += 1
+                    try:
+                        self.packet[i].append(float(line))
+                    except:
+                        sys.stderr.write('[ERROR] Invalid data in temp.p' 
+                                + str(i) + ' at line ' + str(line_cnt) + '\n')
+                        quit()
 
 
     def analyzeStat(self, end_time):
@@ -81,21 +83,27 @@ class Grader:
         avg_time_in_sys = getAverage(time_in_sys)
         std_time_in_sys = getStd(time_in_sys)
 
-        print 'Expected Statistics:'
-        print '    average packet inter-arrival time =', avg_inter_arrival
-        print '    average packet service time =', avg_service_time
-        print '    average number of packets in Q1 =', avg_pkt_in_q1
-        print '    average number of packets in Q2 =', avg_pkt_in_q2
-        print '    average number of packets in S1+S2 =', avg_pkt_in_server
-        print '    average time a packet spent in system =', avg_time_in_sys
-        print '    standard deviation for time spent in system =', std_time_in_sys
+        print('Expected Statistics:')
+        print('    average packet inter-arrival time = ' 
+                    + '{0:.5f}'.format(avg_inter_arrival))
+        print('    average packet service time = ' 
+                    + '{0:.5f}'.format(avg_service_time))
+        print('    average number of packets in Q1 = ' 
+                    + '{0:.5f}'.format(avg_pkt_in_q1))
+        print('    average number of packets in Q2 = ' 
+                    + '{0:.5f}'.format(avg_pkt_in_q2))
+        print('    average number of packets in S1+S2 = ' 
+                    + '{0:.5f}'.format(avg_pkt_in_server))
+        print('    average time a packet spent in system = ' 
+                    + '{0:.5f}'.format(avg_time_in_sys))
+        print('    standard deviation for time spent in system = ' 
+                    + '{0:.5f}'.format(std_time_in_sys))
 
 if __name__ == '__main__':
     try:
         endTime = float(sys.argv[1])
     except:
-        sys.stderr.write('Grading Helper: [ERROR]Invalid ending time\n')
-        print 'Grading Helper: Problem detected. Manual inspection is suggested'
+        sys.stderr.write('[ERROR] Invalid emulation ending time\n')
         quit()
     grader = Grader()
     grader.analyzeStat(endTime)

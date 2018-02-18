@@ -1,4 +1,4 @@
-import sys
+import collections
 import math
 
 def getVariance(_list):
@@ -18,15 +18,15 @@ def getAverage(_list):
 
 class Grader:
     '''
-    an automated grader for CS402's warmup#2 assignment at USC
+    a statistics calculator for CS402's warmup#2 assignment at USC
     '''
     def __init__(self):
         self.endTime = 0
-        self.packet = {}
+        self.packet = collections.defaultdict(list)
 
     def _collectData(self):
         '''
-        read time data and place them to following places:
+        read timestamps and place them to the following places:
         packet[i][0] --- arrival time
         packet[i][1] --- time entering Q1
         packet[i][2] --- time leaving Q1
@@ -35,9 +35,16 @@ class Grader:
         packet[i][5] --- time beginning service
         packet[i][6] --- time finishing service
         '''
+        #loads emulation ending time from temp.end
+        with open('temp.end', 'r') as f:
+            try:
+                self.endTime = float(f.readline()) / 1000
+            except ValueError as e:
+                msg = 'Invalid emulation ending time; ' + e.message
+                raise ValueError(msg)
+
+        #loads timestamps of packet i from temp.pi
         for i in range(1, 6):
-            if i not in self.packet:
-                self.packet[i] = []
             filename = 'temp.p' + str(i)
             with open(filename, 'r') as f:
                 line_cnt = 0
@@ -45,13 +52,12 @@ class Grader:
                     line_cnt += 1
                     try:
                         self.packet[i].append(float(line))
-                    except:
-                        sys.stderr.write('[ERROR] Invalid data in temp.p' 
-                                + str(i) + ' at line ' + str(line_cnt) + '\n')
-                        quit()
+                    except ValueError as e:
+                        msg = ('Invalid data in temp.p' + str(i) + ' on line '
+                                + str(line_cnt) + '; ' + e.message)
+                        raise ValueError(msg)
 
-
-    def analyzeStat(self, end_time):
+    def analyzeStat(self):
         '''
         Calculate the statistics from student's output
         '''
@@ -61,8 +67,11 @@ class Grader:
         time_in_server = []
         time_in_sys = []
 
-        self._collectData()
-        self.endTime = end_time/1000
+        try:
+            self._collectData()
+        except Exception as e:
+            print '[ERROR] ' + (e.message or e.strerror)
+            quit(-1)
 
         #compute inter-arrival time and time in each facility
         prev_arrival = 0
@@ -100,11 +109,6 @@ class Grader:
                     + '{0:.5f}'.format(std_time_in_sys))
 
 if __name__ == '__main__':
-    try:
-        endTime = float(sys.argv[1])
-    except:
-        sys.stderr.write('[ERROR] Invalid emulation ending time\n')
-        quit()
     grader = Grader()
-    grader.analyzeStat(endTime)
+    grader.analyzeStat()
 

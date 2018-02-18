@@ -12,7 +12,7 @@ EOF
 #    End of AWK Script    #
 ###########################
 
-print_boundary()
+printBoundary()
 {
 	local i=0
 	while [ $i -lt 80 ] ; do
@@ -83,14 +83,13 @@ for i in 1 2 3 4 5 ; do
 done
 
 #get emulation ending time and calculate expected results using Python
-if cat temp | grep 'ms.*[Ee]mulation.*[Ee]nd' > temp.end ; then
-	endTime=`cat temp.end | sed 's/ms.*//' | sed 's/^0*//'`
+if grep '[Ee]mulation.*[Ee]nd' temp | sed 's/ms.*//' > temp.end ; then
 	echo ">>>Analyzing statistics..."
-	print_boundary
-	python "$path/grader.py" $endTime
-	print_boundary
+	printBoundary
+	python "$path/grader.py"
+	printBoundary
 	awk "$getStat" temp.compact
-	print_boundary
+	printBoundary
 	echo ">>>Please compare the expected results with student's output..."
 else
 	echo '[ERROR] cannot find emulation ending time' 1>&2

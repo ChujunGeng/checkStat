@@ -45,6 +45,9 @@ notInOrder()
 }
 
 path=`echo "$0" | sed "s/checkStat\.sh//"`
+if [ "x$path" == "x" ]; then
+	path=`pwd`
+fi
 
 #check if warmup2's executable is in current working directory
 if [ ! -x './warmup2' ]; then
@@ -62,6 +65,7 @@ echo ">>>warmup2 has returned..."
 echo ">>>Collecting data from the output..."
 
 #collect each packet's timestamp and check if the trace output is valid
+shouldAbort=0
 for i in 1 2 3 4 5 ; do
 	printf ">>>Collecting data of packet p$i..."
 	#get the timestamps from each packet and remove leading 0s
@@ -71,16 +75,21 @@ for i in 1 2 3 4 5 ; do
 	if [ $line_cnt -ne 7 ] ; then
 		echo
 		echo "[ERROR] there're $line_cnt lines of output for packet p$i" 1>&2
-		exit 1
+		shouldAbort=1
 	fi
 	#check if timestamps are in ascending order
 	if notInOrder < "temp.p$i" ; then
 		echo
 		echo "[ERROR] timestamps not monotonically non-decreasing" 1>&2
-		exit 1
+		shouldAbort=1
 	fi
 	echo "done"
 done
+
+#Stop the script if the trace output is malformed
+if [ $shouldAbort -eq 1 ] ; then
+	exit 1
+fi
 
 #get emulation ending time and calculate expected results using Python
 if grep '[Ee]mulation.*[Ee]nd' temp | sed 's/ms.*//' > temp.end ; then

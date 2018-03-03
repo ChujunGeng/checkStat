@@ -49,6 +49,11 @@ if [ "x$path" == "x" ]; then
 	path=`pwd`
 fi
 
+awk_version='awk'
+if [ "x`uname -a | grep 'nunki'`" != "x" ] ; then
+        awk_version='nawk'
+fi
+
 #check if warmup2's executable is in current working directory
 if [ ! -x './warmup2' ]; then
 	echo "[ERROR] cannot find warmup2 executable file" 1>&2
@@ -60,7 +65,7 @@ echo ">>>Running warmup2..."
 ./warmup2 -n 5 -r 2.5 > temp
 
 #remove empty lines in the ./temp file
-awk 'NF' temp > temp.compact
+$awk_version 'NF' temp > temp.compact
 echo ">>>warmup2 has returned..."
 echo ">>>Collecting data from the output..."
 
@@ -97,7 +102,7 @@ if grep '[Ee]mulation.*[Ee]nd' temp | sed 's/ms.*//' > temp.end ; then
 	printBoundary
 	python "$path/grader.py"
 	printBoundary
-	awk "$getStat" temp.compact
+	$awk_version "$getStat" temp.compact
 	printBoundary
 	echo ">>>Please compare the expected results with student's output..."
 else

@@ -70,7 +70,7 @@ class Grader:
         try:
             self._collectData()
         except Exception as e:
-            print '[ERROR] ' + (e.message or e.strerror)
+            print('[ERROR] ' + (e.message or e.strerror))
             quit(-1)
 
         #compute inter-arrival time and time in each facility

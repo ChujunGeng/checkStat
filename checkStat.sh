@@ -14,8 +14,9 @@ EOF
 
 printBoundary()
 {
+	# Print an 80-character long horizontal line
 	local i=0
-	while [ $i -lt 80 ] ; do
+	while [ $i -lt 80 ]; do
 		printf '='
 		i=`expr $i '+' 1`
 	done
@@ -24,18 +25,19 @@ printBoundary()
 
 notInOrder()
 {
-	#check if timestamps are not in correct order
+	# Check if timestamps are not in correct order
 	local line
 	read line
 	prev=$line
-	while [ "x$line" != "x" ] ; do
+	while [ "x$line" != "x" ]; do
+		# Use Perl for floating point comparison
 		local cmp=`perl -e "if($line < $prev){\
 					print 0;\
 				}\
 				else{\
 					print 1;\
 				}"`
-		if [ $cmp -eq 0 ] ; then
+		if [ $cmp -eq 0 ]; then
 			return 0
 		fi
 		prev=$line
@@ -46,43 +48,51 @@ notInOrder()
 
 path=`echo "$0" | sed "s/checkStat\.sh//"`
 if [ "x$path" == "x" ]; then
-	path=`pwd`
+	# If checkStat.sh is on your path, then look for it
+	path=`which 'checkStat.sh' | sed 's/checkStat\.sh//'`
 fi
 
-awk_version='awk'
-if [ "x`uname -a | grep 'nunki'`" != "x" ] ; then
-        awk_version='nawk'
+# Check if grader.py is in the same directory as checkStat.sh
+if [ ! -e "$path/grader.py" ]; then
+	echo "[ERROR] cannot find grader.py inside $path" 1>&2
+	exit 2
 fi
 
-#check if warmup2's executable is in current working directory
+awk='awk'
+if [ "x`uname -a | grep 'nunki'`" != "x" ]; then
+	# Switch to nawk if on nunki
+        awk='nawk'
+fi
+
+# Check if warmup2's executable is in current working directory
 if [ ! -x './warmup2' ]; then
 	echo "[ERROR] cannot find warmup2 executable file" 1>&2
 	exit 2
 fi
 
-#run warmup2 with certain configs and save trace output to ./temp
-echo ">>>Running warmup2..."
+# Run warmup2 with n=5 r=2.5 and save trace output to ./temp
+echo ">>> Running warmup2..."
 ./warmup2 -n 5 -r 2.5 > temp
 
-#remove empty lines in the ./temp file
-$awk_version 'NF' temp > temp.compact
-echo ">>>warmup2 has returned..."
-echo ">>>Collecting data from the output..."
+# Remove empty lines from the trace output
+$awk 'NF' temp > temp.compact
+echo ">>> warmup2 has returned..."
+echo ">>> Collecting data from the output..."
 
-#collect each packet's timestamp and check if the trace output is valid
+# Collect each packet's timestamp and check if the trace output is valid
 shouldAbort=0
 for i in 1 2 3 4 5 ; do
-	printf ">>>Collecting data of packet p$i..."
-	#get the timestamps from each packet and remove leading 0s
+	printf ">>> Collecting data of packet p$i..."
+	# Get the timestamps from each packet and remove leading 0s
 	grep "[Pp]$i" temp | sed "s/ms.*//" | sed "s/^0*//" > "temp.p$i"
 	line_cnt=`wc -l < "temp.p$i"`
-	#check if there're 7 lines in total
-	if [ $line_cnt -ne 7 ] ; then
+	# Check if there're 7 lines of trace output in total
+	if [ $line_cnt -ne 7 ]; then
 		echo
 		echo "[ERROR] there're $line_cnt lines of output for packet p$i" 1>&2
 		shouldAbort=1
 	fi
-	#check if timestamps are in ascending order
+	# Check if timestamps are non-decreasing
 	if notInOrder < "temp.p$i" ; then
 		echo
 		echo "[ERROR] timestamps not monotonically non-decreasing" 1>&2
@@ -91,25 +101,25 @@ for i in 1 2 3 4 5 ; do
 	echo "done"
 done
 
-#Stop the script if the trace output is malformed
-if [ $shouldAbort -eq 1 ] ; then
+# Stop the script if the trace output is malformed
+if [ $shouldAbort -eq 1 ]; then
 	exit 1
 fi
 
-#get emulation ending time and calculate expected results using Python
+# Get emulation ending time and calculate expected stats using Python
 if grep '[Ee]mulation.*[Ee]nd' temp | sed 's/ms.*//' > temp.end ; then
-	echo ">>>Analyzing statistics..."
+	echo ">>> Analyzing statistics..."
 	printBoundary
 	python "$path/grader.py"
 	printBoundary
-	$awk_version "$getStat" temp.compact
+	$awk "$getStat" temp.compact
 	printBoundary
-	echo ">>>Please compare the expected results with student's output..."
+	echo ">>> Please compare the expected results with student's output..."
 else
 	echo '[ERROR] cannot find emulation ending time' 1>&2
 	exit 1
 fi
 
-#cleanup
-#rm -f temp.* temp
+# Cleanup
+# rm -f temp.* temp
 
